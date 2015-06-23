@@ -21,22 +21,32 @@ var server = http.createServer(function (req, res) {
   // res is an http.ServerResponse, which is a Writable Stream
 
   var body = '';
+  var url = req.url;
 
+  console.log("req.method: " + req.method);
   req.on('data', function (chunk) {
     body += chunk;
   });
 
   req.on('end', function () {
-    console.log("req.end");
+    console.log("req.end is called");
 
-    res.write(body);
+    res.setHeader("Date", "2015-07-01");
+    res.writeHead(200, { "Connection" : "close"});
+    res.write("<html>");
+    res.write("<head>");
+    res.write("<title>"+"iotjs response" +"</title>");
+    res.write("</head>");
+    res.write("<body>");
+    res.write("your request is: " + url);
+    res.write("your body is: " + body);
+    res.write("</body>");
+    res.write("</html>");
     res.end();
   });
 
 });
 
-server.listen(3001,1,cb);
-
-function cb(){
+server.listen(3001,1,function cb(){
   console.log("listening....");
-};
+});

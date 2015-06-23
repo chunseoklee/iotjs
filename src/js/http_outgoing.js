@@ -29,21 +29,16 @@ function OutgoingMessage() {
   this._last = false;
   this.chunkedEncoding = false;
   this.shouldKeepAlive = true;
-  this.useChunkedEncodingByDefault = true;
-  this.sendDate = false;
-  this._removedHeader = {};
 
   this._hasBody = true;
-  this._trailer = '';
 
   this.finished = false;
-  this._hangupClose = false;
-  this._headerSent = false;
+  this._sentHeader = false;
 
   this.socket = null;
   this.connection = null;
   this._header = null;
-  this._headers = null;
+  this._headers = {};
   this._headerNames = {};
 }
 util.inherits(OutgoingMessage, stream.Stream);
@@ -51,26 +46,84 @@ util.inherits(OutgoingMessage, stream.Stream);
 
 exports.OutgoingMessage = OutgoingMessage;
 
+
 OutgoingMessage.prototype.end = function(data, encoding, callback) {
+
+  // flush header
+  if (!this._sentHeader) {
+    this.connection.write(this._header, encoding, callback);
+  }
+
   this._finish();
   return true;
 };
+
 
 OutgoingMessage.prototype._finish = function() {
   this.emit('prefinish');
 };
 
+
 OutgoingMessage.prototype._send = function(chunk, encoding, callback) {
+  if (!this._sentHeader) {
+    if (util.isBuffer(chunk)) {
+      chunk = chunk.toString();
+    }
+    chunk = this._header + "\r\n" + chunk;
+    this._sentHeader = true;
+  }
+  if (util.isBuffer(chunk)) {
+    chunk = chunk.toString();
+
+  }
   this.connection.write(chunk, encoding, callback);
 };
 
+
 OutgoingMessage.prototype.write = function(chunk, encoding, callback) {
+  if (!this._header) {
+    this._implicitHeader();
+  }
+
   if (!this._hasBody) {
     return true;
   }
-
   var ret = this._send(chunk, encoding, callback);
 
   return ret;
 
+};
+
+
+OutgoingMessage.prototype._storeHeader = function(statusLine) {
+  var headerStr = '';
+
+  var keys;
+  if (this._headers) {
+    keys = Object.keys(this._headers);
+    for (var i=0;i<keys.length;i++) {
+      var key = keys[i];
+      headerStr += key + ": " + this._headers[key] + '\r\n';
+    }
+  }
+
+  this._header = statusLine + headerStr;
+
+};
+
+
+OutgoingMessage.prototype.setHeader = function(name, value) {
+
+  if (this._headers === null) {
+    this._headers = {};
+  }
+
+  this._headers[name] = value;
+  this._storeHeader();
+
+};
+
+
+OutgoingMessage.prototype.getHeader = function(name) {
+  return this._headers[name];
 };
