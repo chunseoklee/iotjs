@@ -30,75 +30,60 @@ var O_TRUNC = constants.O_TRUNC;
 var O_WRONLY = constants.O_WRONLY;
 
 
-fs.statSync = function(path) {
-  return fsBuiltin.stat(path);
+fs.Stats = function(stat) {
+  this.dev = stat.dev;
+  this.mode = stat.mode;
+  this.nlink = stat.nlink;
+  this.uid = stat.uid;
+  this.gid = stat.gid;
+  this.rdev = stat.rdev;
+  this.blksize = stat.blksize;
+  this.ino = stat.ino;
+  this.size = stat.size;
+  this.blocks = stat.blocks;
 };
 
-fs.stat = function(path, callback) {
-  fsBuiltin.stat(path, callback);
-};
-
-
-fs.Stats = function(dev,
-                    mode,
-                    nlink,
-                    uid,
-                    gid,
-                    rdev,
-                    blksize,
-                    ino,
-                    size,
-                    blocks) {
-  this.dev = dev;
-  this.mode = mode;
-  this.nlink = nlink;
-  this.uid = uid;
-  this.gid = gid;
-  this.rdev = rdev;
-  this.blksize = blksize;
-  this.ino = ino;
-  this.size = size;
-  this.blocks = blocks;
-
-};
 
 fs.Stats.prototype.isDirectory = function() {
   return ((this.mode & constants.S_IFMT) === constants.S_IFDIR);
 };
 
 
+fsBuiltin._createStat = function(stat) {
+  return new fs.Stats(stat);
+};
 
-fsBuiltin.createStat = function(dev,
-                                mode,
-                                nlink,
-                                uid,
-                                gid,
-                                rdev,
-                                blksize,
-                                ino,
-                                size,
-                                blocks) {
-  var statobj = new fs.Stats(dev,
-                             mode,
-                             nlink,
-                             uid,
-                             gid,
-                             rdev,
-                             blksize,
-                             ino,
-                             size,
-                             blocks);
-  return statobj;
+
+fs.stat = function(path, callback) {
+  fsBuiltin.stat(checkArgString(path, 'path'),
+                 checkArgFunction(callback, 'callback'));
+};
+
+
+fs.statSync = function(path) {
+  return fsBuiltin.stat(checkArgString(path, 'path'));
+};
+
+
+fs.fstat = function(fd, callback) {
+  fsBuiltin.fstat(checkArgNumber(fd, 'fd'),
+                  checkArgFunction(callback, 'callback'));
+};
+
+
+fs.fstatSync = function(fd) {
+  return fsBuiltin.fstat(checkArgNumber(fd, 'fd'));
 };
 
 
 fs.close = function(fd, callback) {
-  fsBuiltin.close(fd, checkArgFunction(callback, 'callback'));
+  fsBuiltin.close(checkArgNumber(fd, 'fd'),
+                  checkArgFunction(callback, 'callback'));
 };
 
 
 fs.closeSync = function(fd) {
-  fsBuiltin.close(fd);
+  fsBuiltin.close(checkArgNumber(fd, 'fd'));
 };
 
 
@@ -173,6 +158,17 @@ fs.writeSync = function(fd, buffer, offset, length, position) {
                          checkArgNumber(offset, 'offset'),
                          checkArgNumber(length, 'length'),
                          checkArgNumber(position, 'position'));
+};
+
+
+fs.readFile = function(path, callback) {
+  fs.open(path, 'r', function(err, fd) {
+    if (err) {
+      callback(err);
+    } else {
+
+    }
+  });
 };
 
 
