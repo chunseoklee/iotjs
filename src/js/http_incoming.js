@@ -29,11 +29,11 @@ function IncomingMessage(socket) {
 
   this.upgrade = null;
 
-  // request (server) only
+  // for request (server)
   this.url = '';
   this.method = null;
 
-  // response (client) only
+  // for response (client)
   this.statusCode = null;
   this.statusMessage = null;
   this.client = this.socket;

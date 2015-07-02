@@ -39,7 +39,7 @@ function OutgoingMessage() {
   this.connection = null;
   this._header = null;
   this._headers = {};
-  this._headerNames = {};
+
 }
 util.inherits(OutgoingMessage, stream.Stream);
 
@@ -53,6 +53,13 @@ OutgoingMessage.prototype.end = function(data, encoding, callback) {
   if (!this._sentHeader) {
     this.connection.write(this._header, encoding, callback);
   }
+
+  if (this.finished) {
+    return false;
+  }
+
+
+  this.finished = true;
 
   this._finish();
   return true;
