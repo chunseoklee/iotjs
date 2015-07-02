@@ -48,20 +48,41 @@ exports.OutgoingMessage = OutgoingMessage;
 
 
 OutgoingMessage.prototype.end = function(data, encoding, callback) {
+  if (util.isFunction(data)) {
+    callback = data;
+    data = null;
+  } else if (util.isFunction(encoding)) {
+    callback = encoding;
+    encoding = null;
+  }
+
 
   // flush header
   if (!this._sentHeader) {
     this.connection.write(this._header, encoding, callback);
   }
 
+  var self = this;
+  var emitFinish = function() {
+    self.emit('finish');
+  };
+
   if (this.finished) {
     return false;
   }
 
 
+  if (util.isFunction(callback))
+    this.once('finish', callback);
+
+  // emit finish
+  process.nextTick(emitFinish);
+
+
   this.finished = true;
 
   this._finish();
+
   return true;
 };
 
@@ -72,6 +93,11 @@ OutgoingMessage.prototype._finish = function() {
 
 
 OutgoingMessage.prototype._send = function(chunk, encoding, callback) {
+  if (util.isFunction(encoding)) {
+    callback = encoding;
+  }
+
+
   if (!this._sentHeader) {
     if (util.isBuffer(chunk)) {
       chunk = chunk.toString();
@@ -79,6 +105,7 @@ OutgoingMessage.prototype._send = function(chunk, encoding, callback) {
     chunk = this._header + "\r\n" + chunk;
     this._sentHeader = true;
   }
+
   if (util.isBuffer(chunk)) {
     chunk = chunk.toString();
 

@@ -42,7 +42,9 @@ var server = http.createServer(function (req, res) {
     res.write("your body is: " + body);
     res.write("</body>");
     res.write("</html>");
-    res.end();
+    res.end(function(){
+      console.log("i am event handler passed to response.end");
+    });
   });
 
 });
