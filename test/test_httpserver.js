@@ -39,6 +39,7 @@ var server = http.createServer(function (req, res) {
     res.write("</head>");
     res.write("<body>");
     res.write("your request is: " + url);
+    res.write('<p>');
     res.write("your body is: " + body);
     res.write("</body>");
     res.write("</html>");

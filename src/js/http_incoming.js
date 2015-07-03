@@ -27,8 +27,6 @@ function IncomingMessage(socket) {
 
   this.headers = {};
 
-  this.upgrade = null;
-
   // for request (server)
   this.url = '';
   this.method = null;

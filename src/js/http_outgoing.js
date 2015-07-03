@@ -20,15 +20,9 @@ var stream = require('stream');
 function OutgoingMessage() {
   stream.Stream.call(this);
 
-  this.output = [];
-  this.outputEncodings = [];
-  this.outputCallbacks = [];
-
   this.writable = true;
 
   this._last = false;
-  this.chunkedEncoding = false;
-  this.shouldKeepAlive = true;
 
   this._hasBody = true;
 
@@ -155,6 +149,15 @@ OutgoingMessage.prototype.setHeader = function(name, value) {
   this._headers[name] = value;
   this._storeHeader();
 
+};
+
+
+OutgoingMessage.prototype.removeHeader = function(name) {
+  if (this._headers === null) {
+    return;
+  }
+
+  delete this._headers[name];
 };
 
 

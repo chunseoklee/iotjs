@@ -115,6 +115,12 @@ ServerResponse.prototype.writeHead = function(statusCode, reason, obj) {
 
   this.statusCode = statusCode;
 
+  // HTTP response without body
+  if (statusCode === 204 || statusCode === 304 ||
+      (100 <= statusCode && statusCode <= 199)) {
+    this._hasBody = false;
+  }
+
   var keys;
   if (obj) {
     if(this._headers === null) {
@@ -315,7 +321,6 @@ function parserOnHeadersComplete(info) {
 
   parser.incoming = new IncomingMessage(parser.socket);
   parser.incoming.url = url;
-  parser.incoming.upgrade = info.upgrade;
 
   if (util.isNumber(info.method)) {
     // for server

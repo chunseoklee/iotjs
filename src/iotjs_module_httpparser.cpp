@@ -33,7 +33,7 @@ namespace iotjs {
     container_.SetProperty( fname_, jobj);                          \
   } while(0)
 
-
+// increse this to minimize inter JS-C call
 #define HEADER_MAX 10
 
 
@@ -100,7 +100,6 @@ class HTTPParserWrap : public JObjectWrap {
 public:
   explicit HTTPParserWrap(JObject& parser_, http_parser_type type)
     : JObjectWrap(parser_) {
-    //parser_.SetNative((uintptr_t)this, NULL);
     Initialize(type);
     parser.data = this;
   }
