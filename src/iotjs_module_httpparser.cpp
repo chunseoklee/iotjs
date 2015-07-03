@@ -398,7 +398,7 @@ JHANDLER_FUNCTION(Execute, handler) {
 
 
   JObject* jbuffer = handler.GetArg(0);
-  Buffer* buffer = Buffer::FromJBuffer(*jbuffer);
+  BufferWrap* buffer = BufferWrap::FromJBuffer(*jbuffer);
   char* buf_data = buffer->buffer();
   int buf_len = buffer->length();
 
