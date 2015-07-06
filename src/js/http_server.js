@@ -352,10 +352,9 @@ function parserOnBody(buf, start, len) {
     return;
   }
 
-  // FIXME: if buffer.slice is done, use it.
-  var bufStr = buf.toString();
-  var bodyStr = bufStr.slice(start, start+len);
-  stream.push(bodyStr);
+  // Push body part into incoming stream, which will emit 'data' event
+  var body = buf.slice(start, start+len);
+  stream.push(body);
 }
 
 function AddHeader(dest, src) {
