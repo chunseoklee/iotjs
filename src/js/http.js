@@ -14,7 +14,17 @@
  */
 
 var Server = require('http_server').Server;
+var client = require('http_client');
 var HTTPParser = process.binding(process.binding.httpparser).HTTPParser;
+
+
+var ClientRequest = exports.ClientRequest = client.ClientRequest;
+
+
+exports.request = function(options, cb) {
+  return new ClientRequest(options, cb);
+};
+
 
 exports.createServer = function(requestListener){
   return new Server(requestListener);

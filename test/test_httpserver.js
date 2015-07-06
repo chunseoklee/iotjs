@@ -53,3 +53,14 @@ var server = http.createServer(function (req, res) {
 server.listen(3001,1,function cb(){
   console.log("listening....");
 });
+
+//process.nextTick(function(){
+var msg = 'http.request test msg';
+var req2 = http.request({method:'POST', port:3001,
+                         headers : { 'Content-Length': msg.length }
+                        });
+req2.write(msg);
+req2.write(msg);
+req2.write(msg);
+req2.end();
+//});
