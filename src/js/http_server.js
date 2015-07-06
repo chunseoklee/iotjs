@@ -123,7 +123,7 @@ ServerResponse.prototype.writeHead = function(statusCode, reason, obj) {
 
   var keys;
   if (obj) {
-    if(this._headers === null) {
+    if (this._headers === null) {
       this._headers = {};
     }
     keys = Object.keys(obj);
@@ -177,8 +177,6 @@ exports.Server = Server;
 
 function connectionListener(socket) {
   var self = this;
-  var incoming = [];
-  var outgoing = [];
 
   // cf) In Node.js, freelist returns a new parser.
   // parser initialize
@@ -186,7 +184,7 @@ function connectionListener(socket) {
   // FIXME: This should be impl. with Array
   parser._headers = {};
   parser._url = '';
-  // cb during  http_parsering from C side(http_parser)
+  // cb during  http parsing from C side(http_parser)
   parser.OnHeaders = parserOnHeaders;
   parser.OnHeadersComplete = parserOnHeadersComplete;
   parser.OnBody = parserOnBody;
@@ -214,11 +212,6 @@ function connectionListener(socket) {
     if (this.parser) {
       parser = null;
     }
-    while (incoming.length) {
-      var req = incoming.shift();
-      req.emit('close');
-    }
-
   }
 
   function socketOnError(e) {
@@ -235,50 +228,22 @@ function connectionListener(socket) {
     }
 
     if (!self.httpAllowHalfOpen) {
-      // FIXME: add kill remaining incomings
-      // like abortInconming() in nodejs
-      if (socket.writable) socket.end();
-    } else if (outgoing.length) {
-      outgoing[outgoing.length - 1]._last = true;
-    } else if (socket._httpMessage) {
-      socket._httpMessage._last = true;
-    } else {
       if (socket.writable) socket.end();
     }
   }
 
   function parserOnIncoming(req, shouldKeepAlive) {
-    incoming.push(req);
 
     var res = new ServerResponse(req);
 
-    if (socket._httpMessage) {
-      // There are already pending outgoing res, append.
-      outgoing.push(res);
-    } else {
-      res.assignSocket(socket);
-    }
-
+    res.assignSocket(socket);
 
     function resOnFinish() {
-
-      // remove current incoming
-      incoming.shift();
-
       res.detachSocket(socket);
 
-
-      if (res._last) {
-        socket.destroySoon();
-      } else {
-        // start the next response message
-        var m = outgoing.shift();
-        if (m) {
-          m.assignSocket(socket);
-        }
-      }
-      // FIXME: this is workaround.
-      // socket.end should be called at socketOnEnd
+      // FIXME: this is mess workaround.
+      // In Node, ConnectionListener has a list of incoming msg.
+      // socket.end should be called at socketOnEnd.
       socket.end();
     }
 
@@ -307,12 +272,12 @@ function parserOnHeadersComplete(info) {
   var headers = info.headers;
   var url = info.url;
 
-  if(!url){
+  if (!url) {
     url = parser._url;
     parser.url = "";
   }
 
-  if(!headers){
+  if (!headers) {
     headers = parser._headers;
     // FIXME: This should be impl. with Array
     parser._headers = {};
@@ -334,10 +299,8 @@ function parserOnHeadersComplete(info) {
 
   var flag_skipbody = false;
 
-  if (!info.upgrade) {
-    flag_skipbody = parser.onIncoming(parser.incoming,
+  flag_skipbody = parser.onIncoming(parser.incoming,
                                       info.shouldkeepalive);
-  }
 
   return flag_skipbody;
 
@@ -358,7 +321,7 @@ function parserOnBody(buf, start, len) {
 }
 
 function AddHeader(dest, src) {
-  for(var i=0;i<src.length;i++){
+  for (var i=0;i<src.length;i++) {
     dest[dest.length+i] = src[i];
   }
   dest.length = dest.length + src.length;
