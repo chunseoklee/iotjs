@@ -88,6 +88,11 @@ struct StringHelper {
     char* newstr = new char[len+1];
     memcpy(newstr, str, len);
     newstr[len] = 0;
+
+    if (saved_heap){
+      delete str;
+      str = newstr;
+    }
     return newstr;
   }
 
@@ -102,6 +107,10 @@ public:
     : JObjectWrap(parser_) {
     Initialize(type);
     parser.data = this;
+  }
+
+  ~HTTPParserWrap() {
+    FreeSavedString();
   }
 
   void Initialize(http_parser_type type);
@@ -288,6 +297,18 @@ public:
 
     for (int i = 0; i < n_values; i++) {
       values[i].SaveToHeap();
+    }
+  }
+
+  void FreeSavedString() {
+    url.Reset();
+    status_msg.Reset();
+    for (int i = 0; i < n_fields; i++) {
+      fields[i].Reset();
+    }
+
+    for (int i = 0; i < n_values; i++) {
+      values[i].Reset();
     }
   }
 
