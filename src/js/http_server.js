@@ -20,6 +20,7 @@ var HTTPParser = process.binding(process.binding.httpparser).HTTPParser;
 var IncomingMessage = require('http_incoming').IncomingMessage;
 var OutgoingMessage = require('http_outgoing').OutgoingMessage;
 var Buffer = require('buffer');
+var common = require('http_common');
 
 var STATUS_CODES = exports.STATUS_CODES = {
   100 : 'Continue',
@@ -175,20 +176,17 @@ util.inherits(Server, net.Server);
 
 exports.Server = Server;
 
+
 function connectionListener(socket) {
   var self = this;
 
   // cf) In Node.js, freelist returns a new parser.
   // parser initialize
-  var parser = new HTTPParser(HTTPParser.REQUEST);
+  var parser = common.createHTTPParser();
   // FIXME: This should be impl. with Array
   parser._headers = {};
   parser._url = '';
-  // cb during  http parsing from C side(http_parser)
-  parser.OnHeaders = parserOnHeaders;
-  parser.OnHeadersComplete = parserOnHeadersComplete;
-  parser.OnBody = parserOnBody;
-  parser.OnMessageComplete = parserOnMessageComplete;
+
   parser.onIncoming = parserOnIncoming;
 
   parser.socket = socket;
