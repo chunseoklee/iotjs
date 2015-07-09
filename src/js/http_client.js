@@ -19,6 +19,7 @@ var HTTPParser = process.binding(process.binding.httpparser).HTTPParser;
 var IncomingMessage = require('http_incoming').IncomingMessage;
 var OutgoingMessage = require('http_outgoing').OutgoingMessage;
 var Buffer = require('buffer');
+var common = require('http_common');
 
 
 function ClientRequest(options, cb) {
@@ -44,7 +45,7 @@ function ClientRequest(options, cb) {
   }
 
   if (cb) {
-    self.once('response', cb);
+    self.on('response', cb);
   }
 
   var conn = new net.Socket();
@@ -82,7 +83,8 @@ ClientRequest.prototype.onSocket = function(socket) {
 
 function tickOnSocket(req, socket) {
   console.log("tickOn Socket");
-  var parser = new HTTPParser(HTTPParser.RESPONSE);
+  var parser = common.createHTTPParser();
+  parser.reinitialize(HTTPParser.RESPONSE);
   req.socket = socket;
   req.connection = socket;
   parser.socket = socket;
@@ -92,7 +94,7 @@ function tickOnSocket(req, socket) {
   socket.parser = parser;
   socket._httpMessage = req;
 
-  //parser.onIncoming = parserOnIncomingClient;
+  parser.onIncoming = parserOnIncomingClient;
   //socket.on('error', socketErrorListener);
   socket.on('data', socketOnData);
   socket.on('end', socketOnEnd);
@@ -129,4 +131,38 @@ function socketOnEnd() {
     delete parser;
   }
   socket.destroy();
+}
+
+
+function parserOnIncomingClient(res, shouldKeepAlive) {
+  console.log('client parseronincoming');
+  var socket = this.socket;
+  var req = socket._httpMessage;
+
+  if (req.res) {
+    // We already have a response object, this means the server
+    // sent a double response.
+    socket.destroy();
+    return;
+  }
+  req.res = res;
+
+  var isHeadResponse = req.method === 'HEAD';
+
+  res.req = req;
+
+  // add our listener first, so that we guarantee socket cleanup
+  res.on('end', responseOnEnd);
+
+  //req.emit('response', res);
+
+  return isHeadResponse;
+}
+
+function responseOnEnd() {
+  var res = this;
+  var req = res.req;
+  var socket = req.socket;
+
+  socket.destroySoon();
 }

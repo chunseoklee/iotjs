@@ -32,7 +32,7 @@ var server = http.createServer(function (req, res) {
     console.log("req.end is called");
 
     res.setHeader("Date", "2015-07-01");
-    res.writeHead(200, { "Connection" : "close"});
+    res.writeHead(200, { "Connection" : "close" });
     res.write("<html>");
     res.write("<head>");
     res.write("<title>"+"iotjs response" +"</title>");
@@ -56,11 +56,13 @@ server.listen(3001,1,function cb(){
 
 //process.nextTick(function(){
 var msg = 'http.request test msg';
-var req2 = http.request({method:'POST', port:3001,
-                         headers : { 'Content-Length': msg.length }
+var options = {method:'POST', port:3001,
+               headers : { 'Content-Length': msg.length }};
+var req2 = http.request(options,
+                        function(res){
+                          console.log('STATUS: '+res);
+                          console.log("my request's response arrived");
                         });
-req2.write(msg);
-req2.write(msg);
 req2.write(msg);
 req2.end();
 //});
