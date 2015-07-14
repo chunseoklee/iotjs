@@ -30,7 +30,7 @@ namespace iotjs {
 #define JSETPROPERTY( container_, fname_, vname_ )                      \
   do {                                                                  \
     JObject jobj(vname_ );                                              \
-    container_.SetProperty( (const jschar*)fname_, jobj);               \
+    container_.SetProperty(fname_, jobj);               \
   } while(0)
 
 // increse this to minimize inter JS-C call
@@ -167,12 +167,12 @@ public:
     JObject jheader;
     JSETPROPERTY(jheader, "length", (n_fields-1)*2);
     for (int i=0;i<n_fields;i++) {
-      jschar index_string0 [5];
-      jschar index_string1 [5];
+      char index_string0 [5];
+      char index_string1 [5];
       sprintf(index_string0,"%d",i*2);
       sprintf(index_string1,"%d",i*2+1);
-      JObject v((jschar*)values[i].ToCString());
-      JObject f((jschar*)fields[i].ToCString());
+      JObject v(values[i].ToCString());
+      JObject f(fields[i].ToCString());
       jheader.SetProperty(index_string0, f);
       jheader.SetProperty(index_string1, v);
 
@@ -197,7 +197,7 @@ public:
     }
     else {
       JSETPROPERTY(info, "headers", makeHeader());
-      JSETPROPERTY(info, "url", (jschar*)url.ToCString());
+      JSETPROPERTY(info, "url", url.ToCString());
     }
     n_fields = n_values = 0;
 
@@ -209,7 +209,7 @@ public:
     // Status
     if (parser.type == HTTP_RESPONSE) {
       JSETPROPERTY(info, "status", (int32_t)parser.status_code);
-      JSETPROPERTY(info, "status_msg", (jschar*)status_msg.ToCString());
+      JSETPROPERTY(info, "status_msg", status_msg.ToCString());
     }
 
     // upgrade
@@ -273,7 +273,7 @@ public:
     JArgList argv(2);
     JObject jheader(makeHeader());
     argv.Add(jheader);
-    JObject jurl((jschar*)url.ToCString());
+    JObject jurl(url.ToCString());
     argv.Add(jurl);
 
 
@@ -402,7 +402,7 @@ JHANDLER_FUNCTION(Finish, handler) {
 
     JObject eobj(JObject::Error("Parse Error"));
     JSETPROPERTY(eobj, "byteParsed", 0);
-    JSETPROPERTY(eobj, "code", (jschar*)http_errno_name(err));
+    JSETPROPERTY(eobj, "code", http_errno_name(err));
     handler.Return(eobj);
   }
 
@@ -446,7 +446,7 @@ JHANDLER_FUNCTION(Execute, handler) {
     enum http_errno err = HTTP_PARSER_ERRNO(&parser->parser);
     JObject eobj(JObject::Error("Parse Error"));
     JSETPROPERTY(eobj, "byteParsed", 0);
-    JSETPROPERTY(eobj, "code", (jschar*)http_errno_name(err));
+    JSETPROPERTY(eobj, "code", http_errno_name(err));
     handler.Return(eobj);
   }
   else{
@@ -525,7 +525,7 @@ JObject* InitHttpparser() {
 
     JObject methods;
 #define V(num, name, string)                                                  \
-    JSETPROPERTY(methods, #num, (const jschar*) #string);
+    JSETPROPERTY(methods, #num, #string);
   HTTP_METHOD_MAP(V)
 #undef V
 
