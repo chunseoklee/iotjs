@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-
+var assert = require('assert');
 var http = require('http');
 
 var server = http.createServer(function (req, res) {
@@ -23,46 +23,63 @@ var server = http.createServer(function (req, res) {
   var body = '';
   var url = req.url;
 
-  console.log("req.method: " + req.method);
   req.on('data', function (chunk) {
     body += chunk;
   });
 
-  req.on('end', function () {
-    console.log("req.end is called");
-
-    res.setHeader("Date", "2015-07-01");
-    res.writeHead(200, { "Connection" : "close" });
-    res.write("<html>");
-    res.write("<head>");
-    res.write("<title>"+"iotjs response" +"</title>");
-    res.write("</head>");
-    res.write("<body>");
-    res.write("your request is: " + url);
-    res.write('<p>');
-    res.write("your body is: " + body);
-    res.write("</body>");
-    res.write("</html>");
-    res.end(function(){
-      console.log("i am event handler passed to response.end");
+  var abc = function () {
+    console.log('req end abc');
+    res.writeHead(200, { "Connection" : "close",
+                         "Content-Length": body.length });
+    res.write(body);
+    console.log('res.end is called');
+    res.end('end', function(){
+     console.log('server cl');
+     server.close();
     });
-  });
+  };
+
+  req.on('end', abc);
 
 });
 
-server.listen(3001,1,function cb(){
+
+server.listen(3001,2,function cb(){
   console.log("listening....");
 });
 
-//process.nextTick(function(){
-var msg = 'http.request test msg';
-var options = {method:'POST', port:3001,
-               headers : { 'Content-Length': msg.length }};
-var req2 = http.request(options,
-                        function(res){
-                          console.log('STATUS: '+res);
-                          console.log("my request's response arrived");
-                        });
+
+var msg = 'http request test msg';
+var options = {
+  method:'POST',
+  port:3001,
+  headers : {'Content-Length': msg.length}
+};
+
+
+var responseHandler = function (res) {
+  var res_body = '';
+  console.log('STATUS: '+res.statusCode);
+
+  var endHandler = function(){
+    console.log('res end');
+    assert.equal(msg, res_body);
+  };
+  res.on('end', endHandler);
+
+  res.on('data', function(chunk){
+    res_body += chunk.toString();
+    console.log('*'+res_body);
+  });
+};
+
+var req2 = http.request(options, responseHandler);
 req2.write(msg);
 req2.end();
-//});
+
+
+
+
+server.on('close', function() {
+  console.log("server close!!!!");
+});

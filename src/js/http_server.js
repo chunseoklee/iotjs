@@ -142,11 +142,22 @@ ServerResponse.prototype.assignSocket = function(socket) {
   socket._httpMessage = this;
   this.socket = socket;
   this.connection = socket;
-  //this.emit('socket', socket);
+  socket.on('close', onServerResponseClose);
+  this.emit('socket', socket);
   //this._flush();
 };
 
+function onServerResponseClose() {
+  console.log('server response close');
+  if (this._httpMessage){
+    console.log('_httpmsg on socket close emit');
+    this._httpMessage.emit('close');
+
+  }
+}
+
 ServerResponse.prototype.detachSocket = function(socket) {
+  console.log('socket reset');
   socket._httpMessage = null;
   this.socket = this.connection = null;
 };
@@ -256,7 +267,7 @@ function connectionListener(socket) {
 }
 
 
-function parserOnMessageComplete() {
+/*function parserOnMessageComplete() {
   var parser = this;
   var stream = parser.incoming;
 
@@ -329,4 +340,4 @@ function parserOnHeaders(headers, url) {
   // FIXME: This should be impl. with Array.concat
   AddHeader(this._headers, headers);
   this._url += url;
-}
+}*/

@@ -45,6 +45,7 @@ function ClientRequest(options, cb) {
   }
 
   if (cb) {
+    // FIXME: this should be self.once
     self.on('response', cb);
   }
 
@@ -54,7 +55,6 @@ function ClientRequest(options, cb) {
 
 
   self.on('socket', function(socket){
-    console.log('socket event emitted');
     self._storeHeader(firstHeaderLine);
     // cf) in node, request are alloc in free list, we dont.
     // Also, we do not buffer things on write call.
@@ -97,6 +97,7 @@ function tickOnSocket(req, socket) {
   parser.onIncoming = parserOnIncomingClient;
   //socket.on('error', socketErrorListener);
   socket.on('data', socketOnData);
+  console.log("register socketOnEnd");
   socket.on('end', socketOnEnd);
   //socket.on('close', socketCloseListener);
 
@@ -106,7 +107,6 @@ function tickOnSocket(req, socket) {
 
 
 function socketOnData(d) {
-  console.log('http_client socketOnData:\n' + d.toString());
   var socket = this;
   var req = this._httpMessage;
   var parser = this.parser;
@@ -135,7 +135,6 @@ function socketOnEnd() {
 
 
 function parserOnIncomingClient(res, shouldKeepAlive) {
-  console.log('client parseronincoming');
   var socket = this.socket;
   var req = socket._httpMessage;
 
@@ -152,14 +151,16 @@ function parserOnIncomingClient(res, shouldKeepAlive) {
   res.req = req;
 
   // add our listener first, so that we guarantee socket cleanup
+  console.log("register res.on('end')");
   res.on('end', responseOnEnd);
 
-  //req.emit('response', res);
+  req.emit('response', res);
 
   return isHeadResponse;
 }
 
 function responseOnEnd() {
+  console.log("responseOnEnd called");
   var res = this;
   var req = res.req;
   var socket = req.socket;

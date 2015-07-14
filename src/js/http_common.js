@@ -36,16 +36,17 @@ exports.createHTTPParser = createHTTPParser;
 
 
 function parserOnMessageComplete() {
-  console.log('parseronmsgcompl');
+  console.log('parseonMSGcompl');
   var parser = this;
   var stream = parser.incoming;
-
+  console.log('push null');
   stream.push(null);
 
   stream.socket.resume();
 }
 
 function parserOnHeadersComplete(info) {
+  console.log('parseonHeadercompl');
   var parser = this;
   var headers = info.headers;
   var url = info.url;
@@ -66,11 +67,9 @@ function parserOnHeadersComplete(info) {
   parser.incoming.url = url;
 
   if (util.isNumber(info.method)) {
-    console.log('common server');
     // for server
     parser.incoming.method = HTTPParser.methods[info.method];
   } else {
-    console.log('common client');
     // for client
     parser.incoming.statusCode = info.status;
     parser.incoming.statusMessage = info.status_msg;
@@ -78,7 +77,7 @@ function parserOnHeadersComplete(info) {
 
 
   var flag_skipbody = false;
-  console.log('common parseronheadcomp:'+parser.incoming.statusCode);
+
   flag_skipbody = parser.onIncoming(parser.incoming,
                                       info.shouldkeepalive);
 
@@ -87,7 +86,7 @@ function parserOnHeadersComplete(info) {
 }
 
 function parserOnBody(buf, start, len) {
-  console.log('common parseronbody:'+buf.slice(start, start+len));
+
   var parser = this;
   var stream = parser.incoming;
 

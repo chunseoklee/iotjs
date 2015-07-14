@@ -26,19 +26,29 @@ module.exports.EventEmitter = EventEmitter;
 
 // TODO: using arguments instead of arg1, arg2.
 EventEmitter.prototype.emit = function(type, arg1, arg2) {
+  if(type == 'end'){
+    console.log('emit end start:');
+    if(this.statusCode) console.log('this is incoming:' + this.statusCode);
+  }
+
   if (!this._events) {
     this._events = {};
   }
 
   var handler = this._events[type];
   if (util.isUndefined(handler)) {
+    if(type == 'end') console.log('false hanedler\n');
     return false;
   } else if (util.isFunction(handler) || util.isObject(handler)) {
     if (util.isFunction(handler)) {
+      if(type == 'end') console.log('single end handler called\n');
       handler.call(this, arg1, arg2);
     } else {
+
       listeners = handler;
       for (i = 0; i < listeners.length; ++i) {
+        if(type == 'end' && arg1 == undefined)
+          console.log('multiple end handler called' + i);
         listeners[i].call(this, arg1, arg2);
       }
     }
@@ -61,7 +71,13 @@ EventEmitter.prototype.addListener = function(type, listener) {
   }
 
   this._events[type].push(listener);
-
+  if(type == 'end'){
+    console.log('add Listener end' +
+                this._events[type].length);
+    if(this.statusCode) console.log('this is incoming:' + this.statusCode);
+  }
+  if(type == 'data') console.log('add Listener data' +
+                                this._events[type].length);
   return this;
 };
 
@@ -70,6 +86,7 @@ EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
 
 EventEmitter.prototype.once = function(type, listener) {
+  if(type == 'end') console.log('add Listener once end');
   if (!util.isFunction(listener)) {
     throw new TypeError('listener must be a function');
   }
@@ -90,6 +107,9 @@ EventEmitter.prototype.once = function(type, listener) {
 
 
 EventEmitter.prototype.removeListener = function(type, listener) {
+  if(type == 'end') console.log('remove Listener end' +
+                                this._events[type].length);
+
   if (!util.isFunction(listener)) {
     throw new TypeError('listener must be a function');
   }

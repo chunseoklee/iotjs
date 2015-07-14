@@ -56,8 +56,13 @@ OutgoingMessage.prototype.end = function(data, encoding, callback) {
     this.connection.write(this._header, encoding, callback);
   }
 
+  if (data) {
+    this.write(data, encoding);
+  }
+
   var self = this;
   var emitFinish = function() {
+    console.log("finish emitted");
     self.emit('finish');
   };
 
@@ -68,6 +73,7 @@ OutgoingMessage.prototype.end = function(data, encoding, callback) {
 
   if (util.isFunction(callback))
     this.once('finish', callback);
+
 
   // emit finish
   process.nextTick(emitFinish);

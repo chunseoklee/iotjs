@@ -127,6 +127,9 @@ Readable.prototype.push = function(chunk, encoding) {
       !util.isNull(chunk)) {
     emitError(this, TypeError('Invalid chunk'));
   } else if (util.isNull(chunk)) {
+    if(this.statusCode) {
+      console.log("its imconimng***:"+this.statusCode);
+    }
     onEof(this);
   } else if (state.ended) {
     emitError(this, Error('stream.push() after EOF'));
@@ -169,6 +172,7 @@ function readBuffer(stream, n) {
 
 
 function emitEnd(stream) {
+
   var state = stream._readableState;
 
   if (stream.length > 0 || !state.ended) {
@@ -176,7 +180,11 @@ function emitEnd(stream) {
   }
 
   if (!state.endEmitted) {
+    console.log('emitend in readable stream');
     state.endEmitted = true;
+    if(stream.statusCode) {
+      console.log("its imconimng*:"+stream.statusCode);
+    }
     stream.emit('end');
   }
 };
@@ -202,7 +210,14 @@ function onEof(stream) {
 
   state.ended = true;
 
+  console.log(".......");
+  if(state.length != 0) {
+    console.log("its imconimng but state.length is not zero:"
+                +state.length + "buf:" + state.buffer.toString() );
+  }
+
   if (state.length == 0) {
+    console.log('onEof emitEnd:'+stream.statusCode);
     emitEnd(stream);
   }
 };
