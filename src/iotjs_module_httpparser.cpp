@@ -212,7 +212,7 @@ public:
       JSETPROPERTY(info, "status_msg", status_msg.ToCString());
     }
 
-    // upgrade
+    // upgrad
     JSETPROPERTY(info, "upgrade", parser.upgrade ? true : false);
     // shouldkeepalive
     JSETPROPERTY(info, "shouldkeepalive",
@@ -221,9 +221,12 @@ public:
 
     argv.Add(info);
 
-    JResult jres(func.Call(jobj, argv));
+    /*JResult jres(func.Call(jobj, argv));
 
-    return jres.value().GetBoolean() ? 1 : 0;
+      return jres.value().GetBoolean() ? 1 : 0;*/
+
+    return MakeCallback(func, jobj, argv).GetBoolean();
+
   }
   int on_body_(const char* at, size_t length) {
     JObject jobj = jobject();
@@ -238,14 +241,19 @@ public:
     JObject leng((int)length);
     argv.Add(leng);
 
-    JResult jres(func.Call(jobj, argv));
 
+
+    /*JResult jres(func.Call(jobj, argv));
 
     if(jres.value().IsNull()){
       had_exception = true;
       return false;
-    }
+      }*/
 
+    if(MakeCallback(func, jobj, argv).IsNull()) {
+      had_exception = true;
+      return false;
+    }
     return 0;
   }
   int on_message_complete_() {
@@ -254,13 +262,17 @@ public:
     assert(func.IsFunction());
 
 
-    JResult jres(func.Call(jobj, JArgList::Empty()));
+    /*JResult jres(func.Call(jobj, JArgList::Empty()));
 
     if(jres.value().IsNull()){
       had_exception = true;
       return false;
-    }
+      }*/
 
+    if(MakeCallback(func, jobj, JArgList::Empty() ).IsNull()) {
+      had_exception = true;
+      return false;
+    }
     return 0;
   }
 
@@ -277,9 +289,13 @@ public:
     argv.Add(jurl);
 
 
-    JResult jres(func.Call(jobj, argv));
+    /*JResult jres(func.Call(jobj, argv));
 
     if(jres.value().IsNull()){
+      had_exception = true;
+      }*/
+
+    if(MakeCallback(func, jobj, JArgList::Empty() ).IsNull()) {
       had_exception = true;
     }
 

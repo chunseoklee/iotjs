@@ -205,6 +205,7 @@ function connectionListener(socket) {
   socket.parser = parser;
 
   socket.on("data", socketOnData);
+  console.log('socket.on end in connectionLister server');
   socket.on("end", socketOnEnd);
   socket.on("error", socketOnError);
   socket.on("close", socketOnClose);

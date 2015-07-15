@@ -28,9 +28,11 @@ var server = http.createServer(function (req, res) {
   });
 
   var abc = function () {
+
     console.log('req end abc');
     res.writeHead(200, { "Connection" : "close",
-                         "Content-Length": body.length });
+                         "Content-Length": body.length+3
+                       });
     res.write(body);
     console.log('res.end is called');
     res.end('end', function(){
@@ -59,11 +61,12 @@ var options = {
 
 var responseHandler = function (res) {
   var res_body = '';
+
   console.log('STATUS: '+res.statusCode);
 
   var endHandler = function(){
     console.log('res end');
-    assert.equal(msg, res_body);
+    assert.equal(msg+'end', res_body);
   };
   res.on('end', endHandler);
 

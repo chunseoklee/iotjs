@@ -159,11 +159,13 @@ function parserOnIncomingClient(res, shouldKeepAlive) {
   return isHeadResponse;
 }
 
-function responseOnEnd() {
+var responseOnEnd = function() {
   console.log("responseOnEnd called");
   var res = this;
   var req = res.req;
   var socket = req.socket;
 
-  socket.destroySoon();
-}
+  if(socket.writable) {
+    socket.destroySoon();
+  }
+};
