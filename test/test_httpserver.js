@@ -27,27 +27,26 @@ var server = http.createServer(function (req, res) {
     body += chunk;
   });
 
-  var abc = function () {
+  var endHandler = function () {
 
-    console.log('req end abc');
+    console.log('server req ended.');
     res.writeHead(200, { "Connection" : "close",
                          "Content-Length": body.length+3
                        });
     res.write(body);
-    console.log('res.end is called');
     res.end('end', function(){
-     console.log('server cl');
+     console.log('server response ended in server side. Now closing server...');
      server.close();
     });
   };
 
-  req.on('end', abc);
+  req.on('end', endHandler);
 
 });
 
 
 server.listen(3001,2,function cb(){
-  console.log("listening....");
+  console.log("server listening....");
 });
 
 
@@ -62,17 +61,16 @@ var options = {
 var responseHandler = function (res) {
   var res_body = '';
 
-  console.log('STATUS: '+res.statusCode);
+  console.log("server response's STATUS: "+res.statusCode);
 
   var endHandler = function(){
-    console.log('res end');
+    console.log('server res ended in client side');
     assert.equal(msg+'end', res_body);
   };
   res.on('end', endHandler);
 
   res.on('data', function(chunk){
     res_body += chunk.toString();
-    console.log('*'+res_body);
   });
 };
 
@@ -84,5 +82,5 @@ req2.end();
 
 
 server.on('close', function() {
-  console.log("server close!!!!");
+  console.log("server closed.");
 });

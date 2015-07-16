@@ -148,16 +148,14 @@ ServerResponse.prototype.assignSocket = function(socket) {
 };
 
 function onServerResponseClose() {
-  console.log('server response close');
   if (this._httpMessage){
-    console.log('_httpmsg on socket close emit');
     this._httpMessage.emit('close');
 
   }
 }
 
 ServerResponse.prototype.detachSocket = function(socket) {
-  console.log('socket reset');
+
   socket._httpMessage = null;
   this.socket = this.connection = null;
 };
@@ -205,7 +203,6 @@ function connectionListener(socket) {
   socket.parser = parser;
 
   socket.on("data", socketOnData);
-  console.log('socket.on end in connectionLister server');
   socket.on("end", socketOnEnd);
   socket.on("error", socketOnError);
   socket.on("close", socketOnClose);

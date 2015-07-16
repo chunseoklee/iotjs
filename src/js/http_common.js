@@ -36,17 +36,17 @@ exports.createHTTPParser = createHTTPParser;
 
 
 function parserOnMessageComplete() {
-  console.log('parseonMSGcompl');
+
   var parser = this;
   var stream = parser.incoming;
-  console.log('push null');
+
   stream.push(null);
 
   stream.socket.resume();
 }
 
 function parserOnHeadersComplete(info) {
-  console.log('parseonHeadercompl');
+
   var parser = this;
   var headers = info.headers;
   var url = info.url;

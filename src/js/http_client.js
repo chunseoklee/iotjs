@@ -82,7 +82,7 @@ ClientRequest.prototype.onSocket = function(socket) {
 
 
 function tickOnSocket(req, socket) {
-  console.log("tickOn Socket");
+
   var parser = common.createHTTPParser();
   parser.reinitialize(HTTPParser.RESPONSE);
   req.socket = socket;
@@ -97,7 +97,6 @@ function tickOnSocket(req, socket) {
   parser.onIncoming = parserOnIncomingClient;
   //socket.on('error', socketErrorListener);
   socket.on('data', socketOnData);
-  console.log("register socketOnEnd");
   socket.on('end', socketOnEnd);
   //socket.on('close', socketCloseListener);
 
@@ -121,7 +120,6 @@ function socketOnData(d) {
 
 
 function socketOnEnd() {
-  console.log('http_client socketOnEnd');
   var socket = this;
   var req = this._httpMessage;
   var parser = this.parser;
@@ -151,7 +149,6 @@ function parserOnIncomingClient(res, shouldKeepAlive) {
   res.req = req;
 
   // add our listener first, so that we guarantee socket cleanup
-  console.log("register res.on('end')");
   res.on('end', responseOnEnd);
 
   req.emit('response', res);
@@ -160,7 +157,6 @@ function parserOnIncomingClient(res, shouldKeepAlive) {
 }
 
 var responseOnEnd = function() {
-  console.log("responseOnEnd called");
   var res = this;
   var req = res.req;
   var socket = req.socket;

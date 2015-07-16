@@ -62,7 +62,6 @@ OutgoingMessage.prototype.end = function(data, encoding, callback) {
 
   var self = this;
   var emitFinish = function() {
-    console.log("finish emitted");
     self.emit('finish');
   };
 
