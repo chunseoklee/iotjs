@@ -75,14 +75,9 @@ function parserOnHeadersComplete(info) {
     parser.incoming.statusMessage = info.status_msg;
   }
 
+  parser.onIncoming(parser.incoming, info.shouldkeepalive);
 
-  var flag_skipbody = false;
-
-  flag_skipbody = parser.onIncoming(parser.incoming,
-                                      info.shouldkeepalive);
-
-  return flag_skipbody;
-
+  return false; // always process body. thus, onbody return
 }
 
 function parserOnBody(buf, start, len) {
