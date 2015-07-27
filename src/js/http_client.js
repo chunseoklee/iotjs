@@ -95,15 +95,49 @@ function tickOnSocket(req, socket) {
   socket._httpMessage = req;
 
   parser.onIncoming = parserOnIncomingClient;
-  //socket.on('error', socketErrorListener);
+  socket.on('error', socketOnError);
   socket.on('data', socketOnData);
   socket.on('end', socketOnEnd);
-  //socket.on('close', socketCloseListener);
+  socket.on('close', socketOnClose);
 
   // socket emitted when a socket is assigned to req
   req.emit('socket', socket);
 }
 
+function socketOnClose() {
+  var socket = this;
+  var req = socket._httpMessage;
+  var parser = socket.parser;
+
+  socket.read();
+
+  if (req.res && req.res.readable) {
+    // Socket closed before we emitted 'end'
+    var res = req.res;
+    res.on('end', function() {
+      res.emit('close');
+    });
+    res.push(null);
+  }
+
+  if (parser) {
+    parser.finish();
+    delete parser;
+  }
+
+
+}
+
+function socketOnError(er) {
+  var socket = this;
+  var parser = socket.parser;
+
+  if (parser) {
+    parser.finish();
+    delete parser;
+  }
+  socket.destroy();
+}
 
 function socketOnData(d) {
   var socket = this;
@@ -137,23 +171,17 @@ function parserOnIncomingClient(res, shouldKeepAlive) {
   var req = socket._httpMessage;
 
   if (req.res) {
-    // We already have a response object, this means the server
-    // sent a double response.
+    // server sent responses twice.
     socket.destroy();
     return;
   }
   req.res = res;
 
-  var isHeadResponse = req.method === 'HEAD';
-
   res.req = req;
 
-  // add our listener first, so that we guarantee socket cleanup
   res.on('end', responseOnEnd);
 
   req.emit('response', res);
-
-  return isHeadResponse;
 }
 
 var responseOnEnd = function() {
