@@ -182,6 +182,11 @@ function parserOnIncomingClient(res, shouldKeepAlive) {
   res.on('end', responseOnEnd);
 
   req.emit('response', res);
+
+  var isHeadResponse =  (req.method == 'HEAD');
+
+  return isHeadResponse;
+
 }
 
 var responseOnEnd = function() {

@@ -21,7 +21,7 @@
 #include "iotjs_module_buffer.h"
 #include <string.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 
 namespace iotjs {
@@ -30,7 +30,7 @@ namespace iotjs {
 #define JSETPROPERTY( container_, fname_, vname_ )                      \
   do {                                                                  \
     JObject jobj(vname_ );                                              \
-    container_.SetProperty(fname_, jobj);               \
+    container_.SetProperty(fname_, jobj);                               \
   } while(0)
 
 // increse this to minimize inter JS-C call
@@ -221,7 +221,7 @@ public:
 
     argv.Add(info);
 
-    return MakeCallback(func, jobj, argv).GetBoolean();
+    return (MakeCallback(func, jobj, argv).GetBoolean()? 1 : 0);
 
   }
   int on_body_(const char* at, size_t length) {
@@ -429,7 +429,7 @@ JHANDLER_FUNCTION(Execute, handler) {
 
 
   if(parser->had_exception){
-    return false; // ???
+    return false;
   }
 
   if(nparsed != buf_len){

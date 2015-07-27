@@ -37,7 +37,7 @@ var server = http.createServer(function (req, res) {
                        });
     res.write(body);
     res.end(function(){
-     if(body == 'close server') server.close();
+      if(body == 'close server') server.close();
     });
   };
 
@@ -118,6 +118,8 @@ var finalOptions = {
 
 var finalResponseHandler = function (res) {
   var res_body = '';
+
+  assert.equal(200, res.statusCode);
 
   var endHandler = function(){
     assert.equal(finalMsg, res_body);
