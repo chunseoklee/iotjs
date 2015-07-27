@@ -21,7 +21,7 @@
 #include "iotjs_module_buffer.h"
 #include <string.h>
 #include <stdlib.h>
-#include <cstdio>
+
 
 
 namespace iotjs {
