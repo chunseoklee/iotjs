@@ -221,10 +221,6 @@ public:
 
     argv.Add(info);
 
-    /*JResult jres(func.Call(jobj, argv));
-
-      return jres.value().GetBoolean() ? 1 : 0;*/
-
     return MakeCallback(func, jobj, argv).GetBoolean();
 
   }
@@ -242,17 +238,9 @@ public:
     argv.Add(leng);
 
 
-
-    /*JResult jres(func.Call(jobj, argv));
-
-    if(jres.value().IsNull()){
-      had_exception = true;
-      return false;
-      }*/
-
     if(MakeCallback(func, jobj, argv).IsNull()) {
       had_exception = true;
-      return false;
+      return -1;
     }
     return 0;
   }
@@ -262,16 +250,9 @@ public:
     assert(func.IsFunction());
 
 
-    /*JResult jres(func.Call(jobj, JArgList::Empty()));
-
-    if(jres.value().IsNull()){
-      had_exception = true;
-      return false;
-      }*/
-
     if(MakeCallback(func, jobj, JArgList::Empty() ).IsNull()) {
       had_exception = true;
-      return false;
+      return -1;
     }
     return 0;
   }
@@ -289,19 +270,12 @@ public:
     argv.Add(jurl);
 
 
-    /*JResult jres(func.Call(jobj, argv));
-
-    if(jres.value().IsNull()){
-      had_exception = true;
-      }*/
-
     if(MakeCallback(func, jobj, JArgList::Empty() ).IsNull()) {
       had_exception = true;
     }
 
     url.Reset();
     flushed = true;
-
   }
 
   void Save() {
