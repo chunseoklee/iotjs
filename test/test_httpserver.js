@@ -32,14 +32,12 @@ var server = http.createServer(function (req, res) {
 
   var endHandler = function () {
 
-    console.log('server req ended.');
     res.writeHead(200, { 'Connection' : 'close',
                          'Content-Length' : body.length
                        });
     res.write(body);
     res.end(function(){
-     console.log('server response ended in server side. Now closing server...');
-     server.close();
+     if(body == 'close server') server.close();
     });
   };
 
@@ -47,21 +45,15 @@ var server = http.createServer(function (req, res) {
 
 });
 
-
-server.listen(3001,2,function cb(){
-  console.log('server listening....');
-});
-
-
-server.on('close', function() {
-  console.log('server closed.');
-});
-
+server.listen(3001,2);
 
 
 // client side code
-// send POST req to server and check response msg
+// 1. send POST req to server and check response msg
+// 2. send GET req to server and check response msg
+// 3. send 'close server' msg
 
+// 1. POST req
 var msg = 'http request test msg';
 var options = {
   method : 'POST',
@@ -70,13 +62,11 @@ var options = {
 };
 
 
-var responseHandler = function (res) {
+var postResponseHandler = function (res) {
   var res_body = '';
 
-  console.log("server response's STATUS: "+res.statusCode);
-
+  assert.equal(200, res.statusCode);
   var endHandler = function(){
-    console.log('server res ended in client side');
     assert.equal(msg, res_body);
   };
   res.on('end', endHandler);
@@ -86,6 +76,59 @@ var responseHandler = function (res) {
   });
 };
 
-var req = http.request(options, responseHandler);
+var req = http.request(options, postResponseHandler);
 req.write(msg);
 req.end();
+
+
+// 2. GET req
+options = {
+  method : 'GET',
+  port : 3001
+};
+
+var getResponseHandler = function (res) {
+  var res_body = '';
+
+  assert.equal(200, res.statusCode);
+
+  var endHandler = function(){
+    // GET msg, no received body
+    assert.equal('', res_body);
+  };
+  res.on('end', endHandler);
+
+  res.on('data', function(chunk){
+    res_body += chunk.toString();
+  });
+};
+
+
+var getReq = http.request(options, getResponseHandler);
+getReq.end();
+
+
+// 3. close server req
+var finalMsg = 'close server';
+var finalOptions = {
+  method : 'POST',
+  port : 3001,
+  headers : {'Content-Length': finalMsg.length}
+};
+
+var finalResponseHandler = function (res) {
+  var res_body = '';
+
+  var endHandler = function(){
+    assert.equal(finalMsg, res_body);
+  };
+  res.on('end', endHandler);
+
+  res.on('data', function(chunk){
+    res_body += chunk.toString();
+  });
+};
+
+var finalReq = http.request(finalOptions, finalResponseHandler);
+finalReq.write(finalMsg);
+finalReq.end();
