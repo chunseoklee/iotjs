@@ -159,16 +159,40 @@ JHANDLER_FUNCTION(Compile){
 
 JHANDLER_FUNCTION(CompileNativePtr){
   JHANDLER_CHECK(handler.GetArgLength() == 1);
-  JHANDLER_CHECK(handler.GetArg(0)->IsObject());
+  JHANDLER_CHECK(handler.GetArg(0)->IsString());
 
-  String source((const char*)handler.GetArg(0)->GetNative());
+  String id (handler.GetArg(0)->GetString());
 
-  JResult jres = WrapEval(source);
+  int i;
+  while (natives[i].name != NULL) {
+    const char *name_iter_p = natives[i].name;
+    size_t name_len = 0;
+    while (*name_iter_p != '\0')
+    {
+      name_len++;
+      name_iter_p++;
+    }
 
-  if (jres.IsOk()) {
-    handler.Return(jres.value());
+    if (name_len == (size_t) id.size ()
+        && !strncmp (natives[i].name, id.data(), id.size())) {
+      break;
+    }
+
+    i++;
+  }
+
+  if (natives[i].name != NULL) {
+    JResult jres = JObject::ExecSnapshot(natives[i].snapshot,
+                                         natives[i].length);
+
+    if (jres.IsOk()) {
+      handler.Return(jres.value());
+    } else {
+      handler.Throw(jres.value());
+    }
   } else {
-    handler.Throw(jres.value());
+    JObject jerror = JObject::Error ("Unknown native module");
+    handler.Throw(jerror);
   }
 
   return !handler.HasThrown();
@@ -239,7 +263,8 @@ JHANDLER_FUNCTION(InitArgv) {
 void SetNativeSources(JObject* native_sources) {
   for (int i = 0; natives[i].name; i++) {
     JObject native_source;
-    native_source.SetNative((uintptr_t)(natives[i].source), NULL);
+    native_source.SetNative((uintptr_t)(&natives[i]), NULL);
+
     native_sources->SetProperty(natives[i].name, native_source);
   }
 }
