@@ -159,7 +159,7 @@ JHANDLER_FUNCTION(Compile){
 
 JHANDLER_FUNCTION(CompileNativePtr){
   JHANDLER_CHECK(handler.GetArgLength() == 1);
-  JHANDLER_CHECK(handler.GetArg(0)->IsObject());
+  JHANDLER_CHECK(handler.GetArg(0)->IsString());
 
   String id (handler.GetArg(0)->GetString());
 

@@ -24,7 +24,7 @@ namespace iotjs {
 
 typedef ReqWrap<uv_getaddrinfo_t> GetAddrInfoReqWrap;
 
-
+#ifndef __NUTTX__
 static void AfterGetAddrInfo(uv_getaddrinfo_t* req, int status, addrinfo* res) {
   GetAddrInfoReqWrap* req_wrap = reinterpret_cast<GetAddrInfoReqWrap*>(
       req->data);
@@ -63,9 +63,11 @@ static void AfterGetAddrInfo(uv_getaddrinfo_t* req, int status, addrinfo* res) {
 
   delete req_wrap;
 }
+#endif
 
 
 JHANDLER_FUNCTION(GetAddrInfo) {
+#ifndef __NUTTX__
   JHANDLER_CHECK(handler.GetThis()->IsObject());
   JHANDLER_CHECK(handler.GetArgLength() == 4);
   JHANDLER_CHECK(handler.GetArg(0)->IsString());
@@ -110,6 +112,7 @@ JHANDLER_FUNCTION(GetAddrInfo) {
   handler.Return(JVal::Number(err));
 
   return true;
+#endif
 }
 
 
@@ -120,8 +123,13 @@ JObject* InitDns() {
   if (dns == NULL) {
     dns = new JObject();
     dns->SetMethod("getaddrinfo", GetAddrInfo);
+#ifndef __NUTTX__
     dns->SetProperty("AI_ADDRCONFIG", JVal::Number(AI_ADDRCONFIG));
     dns->SetProperty("AI_V4MAPPED", JVal::Number(AI_V4MAPPED));
+#else
+    dns->SetProperty("AI_ADDRCONFIG", JVal::Number(64));
+    dns->SetProperty("AI_V4MAPPED", JVal::Number(16));
+#endif
 
     module->module = dns;
   }
