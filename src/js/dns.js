@@ -59,6 +59,15 @@ exports.lookup = function lookup(hostname, options, callback) {
   if (family !== 0 && family !== 4 && family !== 6)
     throw new TypeError('invalid argument: family must be 4 or 6');
 
+  // If nuttx on stm32f4, no support for getaddrinfo.
+  // User should call net.connect with hostname as IP format.
+  if(process.platform === 'nuttx') {
+    process.nextTick(function() {
+      return callback(null, hostname, family);
+    });
+    return 0;
+  }
+
   var err = dnsBuiltin.getaddrinfo(
       hostname,
       family,
