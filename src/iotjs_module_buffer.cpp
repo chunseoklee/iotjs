@@ -163,6 +163,18 @@ JHANDLER_FUNCTION(Buffer) {
 }
 
 
+JHANDLER_FUNCTION(utf8Length) {
+  JHANDLER_CHECK(handler.GetArgLength() == 1);
+  JHANDLER_CHECK(handler.GetArg(0)->IsString());
+
+  String src = handler.GetArg(0)->GetString();
+
+  handler.Return(JVal::Number(src.size()));
+  return true;
+}
+
+
+
 JHANDLER_FUNCTION(Compare) {
   JHANDLER_CHECK(handler.GetThis()->IsObject());
   JHANDLER_CHECK(handler.GetArgLength() == 1);
@@ -288,6 +300,7 @@ JObject* InitBuffer() {
 
     JObject prototype;
     buffer->SetProperty("prototype", prototype);
+    buffer->SetMethod("utf8Length", utf8Length);
 
     prototype.SetMethod("compare", Compare);
     prototype.SetMethod("copy", Copy);
