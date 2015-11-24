@@ -124,6 +124,47 @@ size_t BufferWrap::Copy(char* src,
 }
 
 
+// This function decodes src(base64 encoded) into binary form
+// and save it into buffer(dst_from).
+// if src is not well formed(e.g. 'A'), return empty buffer.
+size_t BufferWrap::Copy_base64(char* src,
+                        size_t src_from,
+                        size_t src_to,
+                        size_t dst_from) {
+  size_t copied = 0;
+  size_t dst_length = _length;
+  char* out_buf = _buffer;
+
+  for (size_t i = src_from; i < src_to && (src_to-i) > 4;
+       i=i+4) {
+    *(out_buf++) = ((*(src+i)-65) << 2) | ((*(src+i+1)-65) >> 4);
+    *(out_buf++) = ((*(src+i+1)-65) << 4) | ((*(src+i+2)-65) >> 2);
+    *(out_buf++) = ((*(src+i+2)-65) << 6) | ((*(src+i+3)-65));
+    copied += 4;
+    printf("base64_copy: %d %d %d \n", *(out_buf-3),
+           *(out_buf-2), *(out_buf-1));
+  }
+
+  // remaining part : at least 2,3,4 bytes. 1 bytes error, but ignore here.
+  int remain = src_to - src_from - copied;
+  if (remain > 1) {
+    *(out_buf++) = ((*(src+copied)-65) << 2) | ((*(src+copied+1)-65) >> 4);
+    copied++;
+  }
+  if (remain > 2) {
+    *(out_buf++) = ((*(src+copied+1)-65) << 4) | ((*(src+copied+2)-65) >> 2);
+    copied++;
+  }
+  if (remain > 3) {
+    *(out_buf++) = ((*(src+copied+2)-65) << 6) | ((*(src+copied+3)-65));
+    copied++;
+  }
+
+  return copied;
+}
+
+
+
 JObject CreateBuffer(size_t len) {
   JObject jglobal(JObject::Global());
   IOTJS_ASSERT(jglobal.IsObject());
@@ -222,20 +263,31 @@ JHANDLER_FUNCTION(Copy) {
 
 
 JHANDLER_FUNCTION(Write) {
-  JHANDLER_CHECK(handler.GetArgLength() == 3);
+  JHANDLER_CHECK(handler.GetArgLength() == 4);
   JHANDLER_CHECK(handler.GetArg(0)->IsString());
   JHANDLER_CHECK(handler.GetArg(1)->IsNumber());
   JHANDLER_CHECK(handler.GetArg(2)->IsNumber());
+  JHANDLER_CHECK(handler.GetArg(3)->IsString());
 
   String src = handler.GetArg(0)->GetString();
   int offset = handler.GetArg(1)->GetInt32();
   int length = handler.GetArg(2)->GetInt32();
+  String enc = handler.GetArg(3)->GetString();
 
   JObject* jbuiltin = handler.GetThis();
 
   BufferWrap* buffer_wrap = BufferWrap::FromJBufferBuiltin(*jbuiltin);
 
-  size_t copied = buffer_wrap->Copy(src.data(), 0, length, offset);
+  size_t copied = 0;
+
+
+  if (strcmp(enc.data(), "base64") == 0) { // base64
+    copied = buffer_wrap->Copy_base64(src.data(), 0, length, offset);
+  }
+  else { // utf-8 encoding
+    copied = buffer_wrap->Copy(src.data(), 0, length, offset);
+  }
+
 
   handler.Return(JVal::Number((int)copied));
 
