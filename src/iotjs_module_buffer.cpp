@@ -19,6 +19,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const unsigned char b64[256] =
+{
+    /* ASCII table to decode base64 encoding*/
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 64, 64, 64, 64, 64, 64,
+    64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 64, 64, 64, 64, 64,
+    64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+};
 
 namespace iotjs {
 
@@ -122,6 +142,47 @@ size_t BufferWrap::Copy(char* src,
   }
   return copied;
 }
+
+
+// This function decodes src(base64 encoded) into binary form
+// and save it into buffer(dst_from).
+// if src is not well formed(e.g. 'A'), ignore that part(empty buffer)
+size_t BufferWrap::Copy_base64(char* src,
+                        size_t src_from,
+                        size_t src_to,
+                        size_t dst_from) {
+  size_t copied = 0;
+  size_t remaining_dst_length = _length;
+  char* out_buf = _buffer + dst_from;
+
+  for (size_t i = src_from; i < src_to && (src_to-i) > 4; i=i+4) {
+    *(out_buf++) = (b64[*(src+i)] << 2) | ( b64[*(src+i+1)] >> 4);
+    *(out_buf++) = (b64[*(src+i+1)] << 4) | (b64[*(src+i+2)] >> 2);
+    *(out_buf++) = (b64[*(src+i+2)] << 6) | (b64[*(src+i+3)]);
+    copied += 4;
+    remaining_dst_length -= 3;
+  }
+
+  // remaining part : at least 2,3,4 bytes. 1 bytes error, but ignored here.
+  int remaining_src = src_to-src_from - copied;
+  if (remaining_dst_length == 0) return copied;
+
+  if (remaining_src > 1) {
+    *(out_buf++) = (b64[*(src+copied)] << 2) | (b64[*(src+copied+1)] >> 4);
+    copied++;
+  }
+  if (remaining_src > 2) {
+    *(out_buf++) = (b64[*(src+copied)] << 4) | (b64[*(src+copied+1)] >> 2);
+    copied++;
+  }
+  if (remaining_src > 3) {
+    *(out_buf++) = (b64[*(src+copied)] << 6) | (b64[*(src+copied+1)]);
+    copied++;
+  }
+
+  return copied;
+}
+
 
 
 JObject CreateBuffer(size_t len) {
@@ -247,20 +308,31 @@ JHANDLER_FUNCTION(Copy) {
 
 
 JHANDLER_FUNCTION(Write) {
-  JHANDLER_CHECK(handler.GetArgLength() == 3);
+  JHANDLER_CHECK(handler.GetArgLength() == 4);
   JHANDLER_CHECK(handler.GetArg(0)->IsString());
   JHANDLER_CHECK(handler.GetArg(1)->IsNumber());
   JHANDLER_CHECK(handler.GetArg(2)->IsNumber());
+  JHANDLER_CHECK(handler.GetArg(3)->IsString());
 
   String src = handler.GetArg(0)->GetString();
   int offset = handler.GetArg(1)->GetInt32();
   int length = handler.GetArg(2)->GetInt32();
+  String enc = handler.GetArg(3)->GetString();
 
   JObject* jbuiltin = handler.GetThis();
 
   BufferWrap* buffer_wrap = BufferWrap::FromJBufferBuiltin(*jbuiltin);
 
-  size_t copied = buffer_wrap->Copy(src.data(), 0, length, offset);
+  size_t copied = 0;
+
+
+  if (strcmp(enc.data(), "base64") == 0) { // base64
+    copied = buffer_wrap->Copy_base64(src.data(), 0, length, offset);
+  }
+  else { // utf-8 encoding
+    copied = buffer_wrap->Copy(src.data(), 0, length, offset);
+  }
+
 
   handler.Return(JVal::Number((int)copied));
 
@@ -293,15 +365,17 @@ JHANDLER_FUNCTION(Slice) {
 
 JHANDLER_FUNCTION(ToString) {
   JHANDLER_CHECK(handler.GetThis()->IsObject());
-  JHANDLER_CHECK(handler.GetArgLength() == 2);
+  JHANDLER_CHECK(handler.GetArgLength() == 3);
   JHANDLER_CHECK(handler.GetArg(0)->IsNumber());
   JHANDLER_CHECK(handler.GetArg(1)->IsNumber());
+  JHANDLER_CHECK(handler.GetArg(2)->IsString());
 
   JObject* jbuiltin = handler.GetThis();
   BufferWrap* buffer_wrap = BufferWrap::FromJBufferBuiltin(*jbuiltin);
 
   int start = handler.GetArg(0)->GetInt32();
   int end = handler.GetArg(1)->GetInt32();
+  String enc = handler.GetArg(2)->GetString();
   int length = end - start;
   JHANDLER_CHECK(length >= 0);
 
@@ -328,6 +402,7 @@ JObject* InitBuffer() {
     buffer->SetMethod("utf8Length", utf8Length);
     buffer->SetMethod("utf16Length", utf16Length);
     buffer->SetMethod("cesu8Length", cesu8Length);
+
 
     prototype.SetMethod("compare", Compare);
     prototype.SetMethod("copy", Copy);

@@ -198,7 +198,7 @@ int String::UTF16be(uint16_t* out) {
   int out_bytes = 0;
   int processed_bytes = 0;
   uint8_t* src = _data;
-  while (processed_bytes < _size-1) {
+  while (processed_bytes < _size) {
     if(ONEBYTECESU(*src)) {
       if (out != NULL) *out = (uint16_t)(*src);
       // 1 cesu byte to 1 utf16 code unit(2bytes)

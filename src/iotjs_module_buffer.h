@@ -49,6 +49,8 @@ class BufferWrap : public JObjectWrap {
 
   size_t Copy(char* src, size_t len);
   size_t Copy(char* src, size_t src_from, size_t src_to, size_t dst_from);
+  size_t Copy_base64(char* src, size_t src_from, size_t src_to,
+                     size_t dst_from);
 
  protected:
   char* _buffer;

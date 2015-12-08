@@ -43,3 +43,28 @@ var len5 = Buffer.byteLength(str3,'cesu8');
 var len6 = Buffer.byteLength(str3,'utf16le');
 assert.equal(len5, 3);
 assert.equal(len6, 2);
+
+
+// base64 encoding test
+var buf = new Buffer('AAAAAAA=', 'base64');
+//assert.equal(buf.length, 5);
+buf = new Buffer('AAAA', 'base64');
+assert.equal(buf.length, 3);
+buf = new Buffer('AA', 'base64');
+assert.equal(buf.length, 1);
+buf = new Buffer('A=', 'base64');
+assert.equal(buf.length, 0);
+buf = new Buffer('A', 'base64');
+assert.equal(buf.length, 0);
+
+buf = new Buffer('YWJjMTIzIT8kKiYoKSctPUB+', 'base64');
+assert.equal(buf.length, 18);
+assert.equal(buf.toString('utf8'), "abc123!?$*&()'-=@~");
+
+buf = new Buffer('YWJj', 'base64');
+assert.equal(buf.length, 3);
+assert.equal(buf.toString('utf8'), "abc");
+
+str = '\u00bd + \u00bc = \u00be';
+buf = new Buffer(str, 'utf8');
+assert.equal(buf.length, 12);

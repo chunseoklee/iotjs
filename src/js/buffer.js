@@ -21,8 +21,8 @@ var util = require('util');
 // Buffer constructor
 // [1] new Buffer(size)
 // [2] new Buffer(buffer)
-// [3] new Buffer(string)
-function Buffer(subject) {
+// [3] new Buffer(string[, encoding])
+function Buffer(subject, encoding) {
   if (!util.isBuffer(this)) {
     return new Buffer(subject);
   }
@@ -30,7 +30,7 @@ function Buffer(subject) {
   if (util.isNumber(subject)) {
     this.length = subject > 0 ? subject >>> 0 : 0;
   } else if (util.isString(subject)) {
-    this.length = Buffer.byteLength(subject);
+    this.length = Buffer.byteLength(subject, encoding);
   } else if (util.isBuffer(subject)) {
     this.length = subject.length;
   } else {
@@ -40,11 +40,22 @@ function Buffer(subject) {
   this._builtin = new bufferBuiltin(this, this.length);
 
   if (util.isString(subject)) {
-    this.write(subject);
+    this.write(subject, (encoding ? encoding : 'utf8'));
   } else if (util.isBuffer(subject)) {
     subject.copy(this);
   }
 };
+
+
+function base64Length(str) {
+  var len = str.length;
+  if (str.charCodeAt(len - 1) == 61)
+    len--;
+  if (len > 1 && str.charCodeAt(len - 1) == 61)
+    len--;
+  // Base64 ratio: 3/4
+  return (len * 3) >>> 2;
+}
 
 
 // Buffer.byteLength(string)
@@ -64,7 +75,7 @@ Buffer.byteLength = function(str, enc) {
     case 'ucs-2':
     case 'utf16le':
     case 'utf-16le':
-      ret = 2*str.length;
+      ret = str.length * 2;
       break;
     case 'hex':
       ret = str.length >>> 1;
@@ -76,6 +87,9 @@ Buffer.byteLength = function(str, enc) {
     case 'cesu8':
     case 'cesu-8':
       ret = bufferBuiltin.cesu8Length(str);
+      break;
+    case 'base64':
+      ret = base64Length(str);
       break;
     default:
       throw new TypeError('Error: Unsupported encoding');
@@ -163,26 +177,46 @@ Buffer.prototype.copy = function(target, targetStart, sourceStart, sourceEnd) {
   return this._builtin.copy(target, targetStart, sourceStart, sourceEnd);
 };
 
+function isEncoding(enc) {
+  if (enc == 'utf8' || enc == 'utf-8' || enc == 'utf16le' ||
+      enc == 'utf-16le' || enc == 'base64' || enc == 'ascii' ||
+      enc == 'raw' || enc == 'cesu8' || enc == 'cesu-8')
+    return true;
+  else
+    return false;
+}
 
-// buffer.write(string[, offset[, length]])
+// buffer.write(string[, offset[, length]], [encoding])
 // [1] buffer.write(string)
 // [2] buffer.write(string, offset)
 // [3] buffer.write(string, offset, length)
+// [4] buffer.write(string, offset, length, encoding)
+// [5] buffer.write(string, encoding)
 // * offset - default to 0
 // * length - default to buffer.length - offset
-Buffer.prototype.write = function(string, offset, length) {
+Buffer.prototype.write = function(string, offset, length, encoding) {
   if (!util.isString(string)) {
     throw new TypeError('Bad arguments: buff.write(string)');
+  }
+
+  if (util.isUndefined(encoding))
+    encoding = 'cesu8';
+
+  if (isEncoding(offset)) {  // write(string, encoding)
+    encoding = offset;
+    offset = 0;
   }
 
   offset = util.isUndefined(offset) ? 0 : ~~offset;
   offset = boundRange(offset, 0, this.length);
 
-  var remaining = this.length - offset;
+
+  var remaining = ((encoding=='base64')? string.length: this.length)
+      - offset;
   length = util.isUndefined(length) ? remaining : ~~length;
   length = boundRange(length, 0, remaining);
 
-  return this._builtin.write(string, offset, length);
+  return this._builtin.write(string, offset, length, encoding);
 };
 
 
@@ -218,11 +252,19 @@ Buffer.prototype.slice = function(start, end) {
 // [1] buff.toString()
 // [2] buff.toString(start)
 // [3] buff.toString(start, end)
+// [4] buff.toString(start, end, encoding)
+// [5] buff.toString(encoding)
 // * start - default to 0
 // * end - default to buff.lengfth
-Buffer.prototype.toString = function(start, end) {
+Buffer.prototype.toString = function(start, end, encoding) {
+
+  if (util.isEncoding(start)) {
+    encoding = start;
+  }
+
   start = util.isUndefined(start) ? 0 : ~~start;
   end = util.isUndefined(end) ? this.length : ~~end;
+  encoding = util.isUndefined(encoding) ? 'cesu8' : encoding
 
   start = boundRange(start, 0, this.length);
   end = boundRange(end, 0, this.length);
@@ -231,7 +273,7 @@ Buffer.prototype.toString = function(start, end) {
     end = start;
   }
 
-  return this._builtin.toString(start, end);
+  return this._builtin.toString(start, end, encoding);
 };
 
 

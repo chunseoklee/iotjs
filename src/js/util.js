@@ -59,6 +59,17 @@ function isBuffer(arg) {
 }
 
 
+function isEncoding(arg) {
+  if (arg == 'utf8' || arg == 'utf-8' || arg == 'utf16le' ||
+      arg == 'ucs2' || arg == 'ucs-2' || arg == 'raw' ||
+      arg == 'utf-16le' || arg == 'base64' || arg == 'ascii') {
+    return true;
+  }
+
+  return false;
+}
+
+
 function inherits(ctor, superCtor) {
   ctor.prototype = Object.create(superCtor.prototype, {
     constructor: {
@@ -125,7 +136,7 @@ exports.isObject = isObject;
 exports.isFunction = isFunction;
 exports.isBuffer = isBuffer;
 exports.isArray = Array.isArray;
-
+exports.isEncoding = isEncoding;
 exports.inherits = inherits;
 
 exports.format = format;

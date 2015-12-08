@@ -133,7 +133,11 @@ Readable.prototype.push = function(chunk, encoding) {
   } else {
     if (util.isString(chunk)) {
       encoding = encoding || state.defaultEncoding;
+      //console.log(chunk.toString() + "len1:" +
+      //            Buffer.byteLength(chunk ,'cesu-8'));
       chunk = new Buffer(chunk, encoding);
+      //console.log(chunk.toString() + "len2:" + chunk.length);
+
     }
     if (state.flowing) {
       emitData(this, chunk);
